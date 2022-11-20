@@ -1,0 +1,149 @@
+org: kmanadkat
+app: serverless-todo-app
+service: serverless-todo-app
+
+plugins:
+  - serverless-webpack
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'ap-south-1'}  
+
+  tracing:
+    lambda: true
+    apiGateway: true
+
+  logs:
+    restApi: true
+
+  environment:
+    TODOS_TABLE: Todos-${self:provider.stage}
+    ATTACHMENT_TABLE: Images-${self:provider.stage}
+    ATTACHMENT_S3_BUCKET: serverless-205878212305-todo-images-${self:provider.stage}
+    TODOS_CREATED_AT_INDEX: CreatedAtIndex
+    SIGNED_URL_EXPIRATION: 300
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - xray:PutTelemetryRecords
+            - xray:PutTraceSegments
+          Resource: "*"
+
+
+functions:
+  Auth:
+    handler: src/lambda/auth/auth0Authorizer.handler
+
+  # TODO: Configure this function - 
+  # Provide iamRoleStatements property for performing Actions on DynamoDB
+  GetTodos:
+    handler: src/lambda/http/getTodos.handler
+    events:
+      - http:
+          method: get
+          path: todos
+          cors: true
+          authorizer: Auth
+
+  # TODO: Configure this function - 
+  # Provide iamRoleStatements property. Decide the Actions and AWS Resource. 
+  # To refer to an AWS resource defined in the "Resources" section, you can use "Resource: !GetAtt <resource-name>.Arn"
+  # To validate incoming HTTP requests, we have provided the request schemas in function definition below. 
+  CreateTodo:
+    handler: src/lambda/http/createTodo.handler
+    events:
+      - http:
+          method: post
+          path: todos
+          cors: true
+          authorizer: Auth
+          request:
+            schemas:
+              application/json: ${file(models/create-todo-model.json)}
+
+  # TODO: Configure this function
+  # Provide property for setting up CORS, Authorizer, iamRoleStatements, and request schemas
+  UpdateTodo:
+    handler: src/lambda/http/updateTodo.handler
+    events:
+      - http:
+          method: patch
+          path: todos/{todoId}
+
+  # TODO: Configure this function
+  # Provide property for setting up CORS, Authorizer, iamRoleStatements
+  DeleteTodo:
+    handler: src/lambda/http/deleteTodo.handler
+    events:
+      - http:
+          method: delete
+          path: todos/{todoId}
+
+  # TODO: Configure this function
+  # Provide property for setting up CORS, Authorizer, iamRoleStatements
+  GenerateUploadUrl:
+    handler: src/lambda/http/generateUploadUrl.handler
+    events:
+      - http:
+          method: post
+          path: todos/{todoId}/attachment
+
+
+resources:
+  Resources:
+    # Add necessary AWS resources. You will need at least the following AWS resources
+    # TODO: Fill the properties
+    # Feel free to change the names as you like. 
+    GatewayResponseDefault4XX:
+      Type: AWS::ApiGateway::GatewayResponse
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+          gatewayresponse.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST,PUT,DELETE'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: ApiGatewayRestApi
+    
+    # TODO: Create a DynamoDB table with local secondary index and a composite key
+    TodosTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+
+    AttachmentsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:provider.environment.ATTACHMENT_S3_BUCKET}
+        CorsConfiguration:
+          CorsRules:
+          - AllowedHeaders:
+              - "*"
+            AllowedMethods:
+              - GET
+              - PUT
+              - POST
+              - DELETE
+              - HEAD
+            AllowedOrigins:
+              - "*"
+            MaxAge: 3000
+
+    BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        PolicyDocument:
+          Id: MyImagesPolicy
+          Version: "2012-10-17"
+          Statement:
+            - Sid: PublicReadForGetBucketObjects
+              Effect: Allow
+              Principal: '*'
+              Action: 's3:GetObject'
+              Resource: 'arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}/*'
+        Bucket: !Ref AttachmentsBucket

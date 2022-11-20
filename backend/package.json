@@ -1,0 +1,30 @@
+{
+  "name": "serverless-udagram-app",
+  "version": "1.0.0",
+  "description": "Serverless images sharing application",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "aws-xray-sdk": "^3.4.0",
+    "axios": "^1.1.3",
+    "http-errors": "^2.0.0",
+    "jsonwebtoken": "^8.5.1",
+    "middy": "^0.36.0",
+    "uuid": "^9.0.0",
+    "winston": "^3.8.2"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.17",
+    "@types/jsonwebtoken": "^8.5.9",
+    "@types/node": "^10.14.4",
+    "aws-sdk": "^2.1258.0",
+    "serverless-webpack": "^5.10.0",
+    "ts-loader": "^9.4.1",
+    "typescript": "^4.9.3",
+    "webpack": "^5.75.0"
+  },
+  "author": "Krupesh Anadkat",
+  "license": "MIT"
+}
