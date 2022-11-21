@@ -50,6 +50,11 @@ export const handler = async (
 }
 
 
+/**
+ * Description
+ * @param {string} authHeader Header containing bearer token
+ * @returns {Promise<JwtPayload>}
+ */
 async function verifyToken(authHeader: string): Promise<JwtPayload> {
   const token = getToken(authHeader)
   const jwt: Jwt = decode(token, { complete: true }) as Jwt
@@ -59,6 +64,11 @@ async function verifyToken(authHeader: string): Promise<JwtPayload> {
 }
 
 
+/**
+ * Description
+ * @param {string} authHeader Header containing bearer token
+ * @returns {string} token
+ */
 function getToken(authHeader: string): string {
   if (!authHeader) throw new Error('No authentication header')
 
@@ -72,6 +82,11 @@ function getToken(authHeader: string): string {
 }
 
 
+/**
+ * Description
+ * @param {string} kid JWT Token Header kid
+ * @returns {Promise<string>} certificate
+ */
 async function getJwksCertificate(kid: string): Promise<string> {
   const response = await Axios.get(jwksUrl)
 
