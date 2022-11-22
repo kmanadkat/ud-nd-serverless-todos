@@ -21,7 +21,9 @@ export const createTodo = async (createTodoRequest: CreateTodoRequest, userId: s
   return await todoAccess.createTodo(todoItem)
 }
 
-export const deleteTodo = () => {}
+export const deleteTodo = async (todoId: string, userId: string): Promise<boolean> => {
+  return await todoAccess.deleteTodo(todoId, userId)
+}
 
 export const createAttachmentPresignedUrl = () => {}
 

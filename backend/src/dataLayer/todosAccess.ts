@@ -70,4 +70,19 @@ export class TodoAccess {
       return false
     }
   }
+
+  async deleteTodo(todoId: string, userId: string): Promise<boolean> {
+    logger.info('Delete Todo', { todoId, userId })
+    try {
+      await this.docClient.delete({
+        TableName: this.todosTable,
+        Key: { todoId, userId }
+      }).promise()
+
+      return true
+    } catch (error) {
+      logger.error('Delete Todo Error', { todoId, userId, message: error.message })
+      return false
+    }
+  }
 }
