@@ -1,6 +1,7 @@
 import * as uuid from 'uuid'
 import { TodoAccess } from "../dataLayer/todosAccess"
 import { TodoItem } from "../models/TodoItem"
+import { TodoUpdate } from '../models/TodoUpdate'
 import { CreateTodoRequest } from "../requests/CreateTodoRequest"
 
 
@@ -29,4 +30,6 @@ export const getTodosForUser = async (userId: string) => {
   return todos
 }
 
-export const updateTodo = () => {}
+export const updateTodo = async (todoId: string, userId: string, updateTodoRequest: TodoUpdate): Promise<boolean> => {
+  return await todoAccess.updateTodo(todoId, userId, updateTodoRequest)
+}

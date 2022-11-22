@@ -2,7 +2,7 @@ import { CustomAuthorizerEvent, CustomAuthorizerResult } from 'aws-lambda'
 
 import { verify, decode } from 'jsonwebtoken'
 import { createLogger } from '../../utils/logger'
-import Axios from 'axios'
+import fetch from 'node-fetch';
 import { Jwt } from '../../auth/Jwt'
 import { JwtPayload } from '../../auth/JwtPayload'
 
@@ -88,15 +88,16 @@ function getToken(authHeader: string): string {
  * @returns {Promise<string>} certificate
  */
 async function getJwksCertificate(kid: string): Promise<string> {
-  const response = await Axios.get(jwksUrl)
+  const result = await fetch(jwksUrl)
+  const response = await result.json() as any
 
-  if(response.status !== 200) {
-    const errorMessage = `auth0Authorizer.ts/getJwksCertificate: ${response.statusText}`
+  if(result.status !== 200) {
+    const errorMessage = `auth0Authorizer.ts/getJwksCertificate: ${result.statusText}`
     logger.error(errorMessage)
     throw new Error(errorMessage)
   }
 
-  const requiredKey = response.data.keys.find(key => key.kid === kid)
+  const requiredKey = response.keys.find(key => key.kid === kid)
   if(!requiredKey) {
     const errorMessage = `auth0Authorizer.ts/getJwksCertificate: kid ${kid} is not found`
     logger.error(errorMessage)

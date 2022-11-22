@@ -3,6 +3,7 @@ import * as AWSXRay from 'aws-xray-sdk'
 import { DocumentClient } from 'aws-sdk/clients/dynamodb'
 import { TodoItem } from '../models/TodoItem'
 import { createLogger } from '../utils/logger'
+import { TodoUpdate } from '../models/TodoUpdate'
 
 const logger = createLogger('todos')
 const XAWS = AWSXRay.captureAWS(AWS)
@@ -31,6 +32,7 @@ export class TodoAccess {
     return items
   }
 
+
   async createTodo(todo: TodoItem): Promise<TodoItem> {
     logger.info('Creating new Todo', {todoId: todo.todoId, userId: todo.userId})
 
@@ -40,5 +42,32 @@ export class TodoAccess {
     }).promise()
 
     return todo
+  }
+
+
+  async updateTodo(todoId: string, userId: string, todoUpdate: TodoUpdate): Promise<boolean> {
+    logger.info('Update Todo', { todoId, userId })
+    try {
+      await this.docClient.update({
+        TableName: this.todosTable,
+        Key: { todoId, userId },
+        UpdateExpression: 'set #name = :newName, #dueDate = :newDueDate, #done = :newDone',
+        ExpressionAttributeValues: {
+          ':newName': todoUpdate.name,
+          ':newDueDate': new Date(todoUpdate.dueDate).toDateString(),
+          ':newDone': todoUpdate.done
+        },
+        ExpressionAttributeNames: {
+          '#name': 'name',
+          '#dueDate': 'dueDate',
+          '#done': 'done'
+        }
+      }).promise()
+  
+      return true  
+    } catch (error) {
+      logger.error('Update Todo Error', { todoId, userId, message: error.message })
+      return false
+    }
   }
 }
