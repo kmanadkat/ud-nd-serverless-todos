@@ -12,7 +12,10 @@ export class TodoAccess {
   constructor(
     private readonly docClient: DocumentClient = new XAWS.DynamoDB.DocumentClient(),
     private readonly todosTable = process.env.TODOS_TABLE,
-    private readonly indexName = process.env.TODOS_CREATED_AT_INDEX) {
+    private readonly indexName = process.env.TODOS_CREATED_AT_INDEX,
+    private readonly s3Client = new XAWS.S3({ signatureVersion: 'v4' }),
+    private readonly bucketName = process.env.ATTACHMENT_S3_BUCKET,
+    private readonly urlExpiration = process.env.SIGNED_URL_EXPIRATION) {
   }
 
   async getAllTodos(userId: string): Promise<TodoItem[]> {
@@ -83,6 +86,20 @@ export class TodoAccess {
     } catch (error) {
       logger.error('Delete Todo Error', { todoId, userId, message: error.message })
       return false
+    }
+  }
+
+  generateUploadUrl(todoId: string): string {
+    logger.info('Generate Upload URL For Todo Attachment', { todoId })
+    try {
+      return this.s3Client.getSignedUrl('putObject', {
+        Bucket: this.bucketName,
+        Key: todoId,
+        Expires: parseInt(this.urlExpiration),
+      });
+    } catch (error) {
+      logger.error('Generate Upload URL For Todo Attachment Error', { todoId, message: error.message })
+      return ''
     }
   }
 }

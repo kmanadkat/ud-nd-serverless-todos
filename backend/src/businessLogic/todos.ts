@@ -25,7 +25,9 @@ export const deleteTodo = async (todoId: string, userId: string): Promise<boolea
   return await todoAccess.deleteTodo(todoId, userId)
 }
 
-export const createAttachmentPresignedUrl = () => {}
+export const createAttachmentPresignedUrl = (todoId: string): string => {
+  return todoAccess.generateUploadUrl(todoId)
+}
 
 export const getTodosForUser = async (userId: string) => {
   const todos = await todoAccess.getAllTodos(userId)
