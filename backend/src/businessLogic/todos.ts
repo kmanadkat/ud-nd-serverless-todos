@@ -1,9 +1,24 @@
+import * as uuid from 'uuid'
 import { TodoAccess } from "../dataLayer/todosAccess"
+import { TodoItem } from "../models/TodoItem"
+import { CreateTodoRequest } from "../requests/CreateTodoRequest"
 
 
 const todoAccess = new TodoAccess()
 
-export const createTodo = () => {}
+export const createTodo = async (createTodoRequest: CreateTodoRequest, userId: string): Promise<TodoItem> => {
+  const todoId = uuid.v4()
+  const todoItem: TodoItem = {
+    userId,
+    todoId,
+    createdAt: new Date().toDateString(),
+    name: createTodoRequest.name,
+    dueDate: new Date(createTodoRequest.dueDate).toDateString(),
+    done: false,
+    attachmentUrl: '',
+  }
+  return await todoAccess.createTodo(todoItem)
+}
 
 export const deleteTodo = () => {}
 
