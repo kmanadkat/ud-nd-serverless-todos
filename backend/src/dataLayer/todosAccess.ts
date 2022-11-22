@@ -77,10 +77,21 @@ export class TodoAccess {
   async deleteTodo(todoId: string, userId: string): Promise<boolean> {
     logger.info('Delete Todo', { todoId, userId })
     try {
+      // Delete Todo From DynamoDB
       await this.docClient.delete({
         TableName: this.todosTable,
         Key: { todoId, userId }
       }).promise()
+
+      // Delete Todo Attachment If Any
+      this.s3Client.deleteObject({
+        Bucket: this.bucketName,
+        Key: todoId
+      }, (err, _data) => {
+        if(err) logger.info('Attachment Delete For Todo', {err})
+
+        logger.info('Attachment Successfully deleted', { todoId })
+      })
 
       return true
     } catch (error) {
@@ -89,9 +100,18 @@ export class TodoAccess {
     }
   }
 
-  generateUploadUrl(todoId: string): string {
+  async generateUploadUrl(todoId: string, userId: string): Promise<string> {
     logger.info('Generate Upload URL For Todo Attachment', { todoId })
+    const newAttachmentURL = `https://${this.bucketName}.s3.amazonaws.com/${todoId}`
     try {
+      await this.docClient.update({
+        TableName: this.todosTable,
+        Key: { todoId, userId },
+        UpdateExpression: 'set #attachmentUrl = :newURL',
+        ExpressionAttributeValues: { ':newURL': newAttachmentURL },
+        ExpressionAttributeNames: { '#attachmentUrl': 'attachmentUrl'}
+      }).promise()
+
       return this.s3Client.getSignedUrl('putObject', {
         Bucket: this.bucketName,
         Key: todoId,
